@@ -1,0 +1,181 @@
+{
+  "info": {
+    "name": "FitLog - Personal Workout and Calorie Tracker API",
+    "description": "Comprehensive Postman collection for testing FitLog Spring Boot API endpoints, covering CRUD, Business Rules, and Edge Cases.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. User Management",
+      "item": [
+        {
+          "name": "Create User (Normal Path)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alex Johnson\",\n  \"email\": \"alex.johnson@example.com\",\n  \"age\": 25,\n  \"weightKg\": 72.5,\n  \"heightCm\": 178.0,\n  \"gender\": \"Male\"\n}"
+            },
+            "url": "http://localhost:8080/api/users"
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8080/api/users"
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8080/api/users/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Workouts (Core Feature 1)",
+      "item": [
+        {
+          "name": "Log Workout (Normal Path)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"workoutType\": \"Running\",\n  \"durationMinutes\": 45,\n  \"caloriesBurnt\": 380.0,\n  \"workoutDate\": \"2026-09-28\",\n  \"notes\": \"Morning jog around the lake\"\n}"
+            },
+            "url": "http://localhost:8080/api/workouts"
+          }
+        },
+        {
+          "name": "Log Workout - Edge Case: Negative Calories (Violates Business Rule)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"workoutType\": \"Running\",\n  \"durationMinutes\": 30,\n  \"caloriesBurnt\": -100.0,\n  \"workoutDate\": \"2026-09-28\"\n}"
+            },
+            "url": "http://localhost:8080/api/workouts"
+          }
+        },
+        {
+          "name": "Get Workouts for User",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8080/api/workouts/user/1"
+          }
+        },
+        {
+          "name": "Filter Workouts by Type & Date (Idea to Go Further)",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8080/api/workouts/filter?userId=1&type=Running"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Meals (Core Feature 2)",
+      "item": [
+        {
+          "name": "Log Meal (Normal Path)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"foodItem\": \"Grilled Chicken Salad\",\n  \"mealType\": \"LUNCH\",\n  \"quantity\": 250.0,\n  \"calories\": 450.0,\n  \"mealDate\": \"2026-09-28\"\n}"
+            },
+            "url": "http://localhost:8080/api/meals"
+          }
+        },
+        {
+          "name": "Log Meal - Edge Case: Negative Calories (Violates Business Rule)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"foodItem\": \"Soda\",\n  \"mealType\": \"SNACK\",\n  \"quantity\": 330.0,\n  \"calories\": -150.0,\n  \"mealDate\": \"2026-09-28\"\n}"
+            },
+            "url": "http://localhost:8080/api/meals"
+          }
+        },
+        {
+          "name": "Get Meals for User",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8080/api/meals/user/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Summaries & Trends (Core Features 3 & 4)",
+      "item": [
+        {
+          "name": "Daily Summary (Calories In vs Out - Core Feature 3)",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8080/api/summaries/daily?userId=1&date=2026-09-28"
+          }
+        },
+        {
+          "name": "Weekly Trend (Core Feature 4)",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8080/api/summaries/weekly-trend?userId=1&weekStartDate=2026-09-28"
+          }
+        },
+        {
+          "name": "Weekly Trend - Edge Case: Week with Zero Entries (Violates Business Rule)",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8080/api/summaries/weekly-trend?userId=1&weekStartDate=2025-01-06"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Weekly Goals (Core Feature 5)",
+      "item": [
+        {
+          "name": "Set Personal Weekly Goal",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"targetWorkoutCount\": 5,\n  \"weekStartDate\": \"2026-09-28\"\n}"
+            },
+            "url": "http://localhost:8080/api/goals"
+          }
+        },
+        {
+          "name": "Get Active Goal & Progress for User",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8080/api/goals/user/1/active"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Dashboard Overview (Idea to Go Further)",
+      "item": [
+        {
+          "name": "Get System Dashboard Overview",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8080/api/dashboard/overview"
+          }
+        }
+      ]
+    }
+  ]
+}

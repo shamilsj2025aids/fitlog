@@ -55,28 +55,23 @@
 </head>
 <body>
 
-<!-- Navigation Bar -->
+<!-- Clean Header Navbar without exam or swagger clutter -->
 <nav class="navbar navbar-expand-lg navbar-dark py-3">
     <div class="container">
         <a class="navbar-brand fw-bold fs-4 d-flex align-items-center gap-2" href="#">
             <i class="bi bi-activity text-warning fs-3"></i> FitLog
         </a>
-        <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-light text-dark px-3 py-2 rounded-pill fw-normal">Project Leap: Java &amp; DBMS</span>
-            <a href="/swagger-ui.html" target="_blank" class="btn btn-warning btn-sm fw-semibold">
-                <i class="bi bi-box-arrow-up-right me-1"></i> Swagger API Docs
-            </a>
-        </div>
+        <span class="text-white-50 d-none d-md-inline small">Personal Workout &amp; Calorie Tracker</span>
     </div>
 </nav>
 
 <div class="container my-4">
-    <!-- Header / Objective Banner -->
+    <!-- Header Banner -->
     <div class="card card-custom p-4 mb-4 border-start border-primary border-4">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div>
                 <h4 class="fw-bold mb-1">Personal Workout &amp; Calorie Tracker</h4>
-                <p class="text-muted mb-0 small">Log daily workouts and meals, enforce non-negative calorie validation, view daily balances, and track weekly workout trends.</p>
+                <p class="text-muted mb-0 small">Log daily workouts and meals, edit user weight and activity time, view daily summaries, and track weekly workout trends.</p>
             </div>
             <button class="btn btn-outline-primary btn-sm" onclick="loadDashboard()">
                 <i class="bi bi-arrow-clockwise me-1"></i> Refresh System Stats
@@ -142,17 +137,17 @@
     <ul class="nav nav-pills mb-4 nav-justified bg-white p-2 rounded-3 shadow-sm border" id="pills-tab" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="tab-users-tab" data-bs-toggle="pill" data-bs-target="#tab-users" type="button" role="tab">
-                <i class="bi bi-person-plus me-1"></i> 1. Users
+                <i class="bi bi-person-gear me-1"></i> 1. Users (CRUD)
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="tab-workouts-tab" data-bs-toggle="pill" data-bs-target="#tab-workouts" type="button" role="tab">
-                <i class="bi bi-lightning-charge me-1"></i> 2. Log Workout
+                <i class="bi bi-lightning-charge me-1"></i> 2. Workouts &amp; Time
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="tab-meals-tab" data-bs-toggle="pill" data-bs-target="#tab-meals" type="button" role="tab">
-                <i class="bi bi-cup-hot me-1"></i> 3. Log Meal
+                <i class="bi bi-cup-hot me-1"></i> 3. Meals
             </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -177,10 +172,11 @@
 
         <!-- TAB 1: USERS -->
         <div class="tab-pane fade show active" id="tab-users" role="tabpanel">
-            <div class="row g-4">
+            <div class="row g-4 mb-4">
+                <!-- Create User Card -->
                 <div class="col-md-5">
                     <div class="card card-custom p-4">
-                        <h5 class="fw-bold mb-3"><i class="bi bi-person-fill-add text-primary me-2"></i>Register New User</h5>
+                        <h5 class="fw-bold mb-3"><i class="bi bi-person-fill-add text-primary me-2"></i>Create New User</h5>
                         <form id="formUser" onsubmit="createUser(event)">
                             <div class="mb-3">
                                 <label class="form-label small fw-semibold">Full Name *</label>
@@ -196,7 +192,7 @@
                                     <input type="number" class="form-control" id="userAge" placeholder="25" min="1">
                                 </div>
                                 <div class="col-4">
-                                    <label class="form-label small fw-semibold">Weight (kg)</label>
+                                    <label class="form-label small fw-semibold">Weight (kg) *</label>
                                     <input type="number" step="0.1" class="form-control" id="userWeight" placeholder="70.5" min="1">
                                 </div>
                                 <div class="col-4">
@@ -216,7 +212,66 @@
                         </form>
                     </div>
                 </div>
+
+                <!-- Edit User Card (Strengthening the U in CRUD) -->
                 <div class="col-md-7">
+                    <div class="card card-custom p-4 border-start border-warning border-4 mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0 text-warning"><i class="bi bi-pencil-square me-2"></i>Update User Details (U in CRUD)</h5>
+                            <span class="badge bg-warning text-dark">Update Weight &amp; Profile</span>
+                        </div>
+                        <p class="text-muted small">Select any user from the list or table below to instantly update their weight, name, or health metrics.</p>
+                        
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Select User to Edit</label>
+                            <select class="form-select" id="editSelectUser" onchange="onUserSelectChange()"></select>
+                        </div>
+
+                        <form id="formEditUser" onsubmit="updateUser(event)">
+                            <input type="hidden" id="editUserId">
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">Full Name *</label>
+                                    <input type="text" class="form-control" id="editUserName" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">Email Address *</label>
+                                    <input type="email" class="form-control" id="editUserEmail" required>
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-4">
+                                    <label class="form-label small fw-semibold">Age</label>
+                                    <input type="number" class="form-control" id="editUserAge" min="1">
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small fw-bold text-primary">Weight (kg) *</label>
+                                    <input type="number" step="0.1" class="form-control border-primary" id="editUserWeight" required min="1">
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small fw-semibold">Height (cm)</label>
+                                    <input type="number" step="0.1" class="form-control" id="editUserHeight" min="1">
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">Gender</label>
+                                    <select class="form-select" id="editUserGender">
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-warning w-100 fw-semibold">
+                                        <i class="bi bi-check-circle me-1"></i> Save Changes (PUT)
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Registered Users Table -->
                     <div class="card card-custom p-4">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="fw-bold mb-0"><i class="bi bi-people-fill text-primary me-2"></i>Registered Users</h5>
@@ -229,8 +284,8 @@
                                         <th>ID</th>
                                         <th>Name</th>
                                         <th>Email</th>
-                                        <th>Age</th>
                                         <th>Weight</th>
+                                        <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="usersTableBody">
@@ -247,7 +302,7 @@
         <div class="tab-pane fade" id="tab-workouts" role="tabpanel">
             <div class="row g-4">
                 <div class="col-md-5">
-                    <div class="card card-custom p-4">
+                    <div class="card card-custom p-4 mb-4">
                         <h5 class="fw-bold mb-3"><i class="bi bi-plus-circle text-success me-2"></i>Core Feature 1: Log Workout</h5>
                         <form id="formWorkout" onsubmit="createWorkout(event)">
                             <div class="mb-3">
@@ -268,7 +323,7 @@
                             </div>
                             <div class="row g-2 mb-3">
                                 <div class="col-6">
-                                    <label class="form-label small fw-semibold">Duration (mins) *</label>
+                                    <label class="form-label small fw-semibold">Duration / Time (mins) *</label>
                                     <input type="number" class="form-control" id="workoutDuration" required placeholder="45" min="1">
                                 </div>
                                 <div class="col-6">
@@ -289,7 +344,53 @@
                         </form>
                     </div>
                 </div>
+
                 <div class="col-md-7">
+                    <!-- Edit Workout / Time Modal & Card -->
+                    <div id="editWorkoutBox" class="card card-custom p-4 border-start border-success border-4 mb-4 d-none">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="fw-bold mb-0 text-success"><i class="bi bi-clock-history me-2"></i>Update Workout Time &amp; Details</h5>
+                            <button type="button" class="btn-close" onclick="cancelEditWorkout()"></button>
+                        </div>
+                        <p class="text-muted small">Update workout duration (time), burnt calories, or type.</p>
+                        <form id="formEditWorkout" onsubmit="updateWorkout(event)">
+                            <input type="hidden" id="editWorkoutId">
+                            <input type="hidden" id="editWorkoutUserId">
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">Workout Type</label>
+                                    <select class="form-select" id="editWorkoutType" required>
+                                        <option value="Running">Running</option>
+                                        <option value="Cycling">Cycling</option>
+                                        <option value="Weight Training">Weight Training</option>
+                                        <option value="Swimming">Swimming</option>
+                                        <option value="HIIT">HIIT</option>
+                                        <option value="Yoga">Yoga</option>
+                                        <option value="Walking">Walking</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-success">Duration / Time (mins) *</label>
+                                    <input type="number" class="form-control border-success" id="editWorkoutDuration" required min="1">
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">Calories Burnt *</label>
+                                    <input type="number" step="0.1" class="form-control" id="editWorkoutCalories" required min="0">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">Workout Date *</label>
+                                    <input type="date" class="form-control" id="editWorkoutDate" required>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-success flex-grow-1">Save Updated Workout (PUT)</button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="cancelEditWorkout()">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+
                     <div class="card card-custom p-4">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="fw-bold mb-0"><i class="bi bi-clock-history text-success me-2"></i>Workout History</h5>
@@ -304,10 +405,11 @@
                                         <th>Type</th>
                                         <th>Duration</th>
                                         <th>Burnt</th>
+                                        <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="workoutsTableBody">
-                                    <tr><td colspan="5" class="text-center text-muted">No workouts logged yet.</td></tr>
+                                    <tr><td colspan="6" class="text-center text-muted">No workouts logged yet.</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -374,10 +476,11 @@
                                         <th>Food Item</th>
                                         <th>Type</th>
                                         <th>Calories</th>
+                                        <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="mealsTableBody">
-                                    <tr><td colspan="5" class="text-center text-muted">No meals logged yet.</td></tr>
+                                    <tr><td colspan="6" class="text-center text-muted">No meals logged yet.</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -508,7 +611,7 @@
                                         <div class="fw-bold fs-5 text-primary" id="trendTotalWorkouts">0</div>
                                     </div>
                                     <div class="col-4">
-                                        <div class="text-muted small">Duration</div>
+                                        <div class="text-muted small">Duration (Time)</div>
                                         <div class="fw-bold fs-5 text-secondary" id="trendTotalDuration">0 mins</div>
                                     </div>
                                     <div class="col-4">
@@ -525,7 +628,7 @@
                                             <th>Day</th>
                                             <th>Date</th>
                                             <th>Workouts</th>
-                                            <th>Duration</th>
+                                            <th>Time (mins)</th>
                                             <th>Burnt</th>
                                             <th>Consumed</th>
                                         </tr>
@@ -579,7 +682,7 @@
                                 <th>Date</th>
                                 <th>User</th>
                                 <th>Type</th>
-                                <th>Duration</th>
+                                <th>Duration (Time)</th>
                                 <th>Calories Burnt</th>
                                 <th>Notes</th>
                             </tr>
@@ -598,6 +701,8 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     const API_BASE = '/api';
+    let cachedUsers = [];
+    let cachedWorkouts = [];
 
     // Set today as default date in inputs
     document.addEventListener("DOMContentLoaded", () => {
@@ -627,6 +732,7 @@
     }
 
     async function handleResponse(res) {
+        if (res.status === 204) return null;
         const data = await res.json();
         if (!res.ok) {
             let msg = data.message || 'Error occurred';
@@ -655,6 +761,7 @@
         try {
             const res = await fetch(`${API_BASE}/users`);
             const users = await handleResponse(res);
+            cachedUsers = users;
             
             // Populate select dropdowns
             const userSelects = document.querySelectorAll('.user-select');
@@ -671,7 +778,17 @@
                 if (currentVal) select.value = currentVal;
             });
 
-            // Populate users table
+            // Populate Edit User selector
+            const editSelect = document.getElementById('editSelectUser');
+            editSelect.innerHTML = '<option value="">-- Choose User to Edit --</option>';
+            users.forEach(u => {
+                const opt = document.createElement('option');
+                opt.value = u.id;
+                opt.text = `${u.name} (Current Weight: ${u.weightKg ? u.weightKg + ' kg' : 'Not set'})`;
+                editSelect.appendChild(opt);
+            });
+
+            // Populate users table with Edit & Delete action buttons
             const tbody = document.getElementById('usersTableBody');
             if (users.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No users found. Please create one.</td></tr>';
@@ -681,13 +798,91 @@
                         <td><strong>${u.id}</strong></td>
                         <td>${u.name}</td>
                         <td>${u.email}</td>
-                        <td>${u.age || '-'}</td>
-                        <td>${u.weightKg ? u.weightKg + ' kg' : '-'}</td>
+                        <td><span class="badge bg-light text-dark fw-bold">${u.weightKg ? u.weightKg + ' kg' : '-'}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-warning me-1" onclick="selectUserForEdit(${u.id})">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${u.id}, '${u.name}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
                     </tr>
                 `).join('');
             }
         } catch (err) {
             console.error(err);
+        }
+    }
+
+    function selectUserForEdit(userId) {
+        const u = cachedUsers.find(user => user.id === userId);
+        if (!u) return;
+
+        document.getElementById('editSelectUser').value = userId;
+        document.getElementById('editUserId').value = u.id;
+        document.getElementById('editUserName').value = u.name;
+        document.getElementById('editUserEmail').value = u.email;
+        document.getElementById('editUserAge').value = u.age || '';
+        document.getElementById('editUserWeight').value = u.weightKg || '';
+        document.getElementById('editUserHeight').value = u.heightCm || '';
+        document.getElementById('editUserGender').value = u.gender || 'Male';
+
+        document.getElementById('formEditUser').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function onUserSelectChange() {
+        const userId = parseInt(document.getElementById('editSelectUser').value);
+        if (userId) {
+            selectUserForEdit(userId);
+        }
+    }
+
+    async function updateUser(e) {
+        e.preventDefault();
+        const userId = document.getElementById('editUserId').value;
+        if (!userId) {
+            showAlert('Please select a user to edit first.', 'warning');
+            return;
+        }
+
+        try {
+            const payload = {
+                name: document.getElementById('editUserName').value,
+                email: document.getElementById('editUserEmail').value,
+                age: document.getElementById('editUserAge').value ? parseInt(document.getElementById('editUserAge').value) : null,
+                weightKg: document.getElementById('editUserWeight').value ? parseFloat(document.getElementById('editUserWeight').value) : null,
+                heightCm: document.getElementById('editUserHeight').value ? parseFloat(document.getElementById('editUserHeight').value) : null,
+                gender: document.getElementById('editUserGender').value
+            };
+
+            const res = await fetch(`${API_BASE}/users/${userId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const updated = await handleResponse(res);
+            showAlert(`User '${updated.name}' updated successfully! New Weight: ${updated.weightKg} kg (PUT Request Succeeded)`);
+            loadUsers();
+            loadDashboard();
+        } catch (err) {
+            showAlert(`Update failed: ${err.message}`, 'danger');
+        }
+    }
+
+    async function deleteUser(userId, userName) {
+        if (!confirm(`Are you sure you want to delete user '${userName}' and all their workout/meal history?`)) return;
+
+        try {
+            const res = await fetch(`${API_BASE}/users/${userId}`, { method: 'DELETE' });
+            await handleResponse(res);
+            showAlert(`User '${userName}' (ID: ${userId}) deleted successfully. (DELETE Request Succeeded)`);
+            loadUsers();
+            loadDashboard();
+            loadRecentWorkouts();
+            loadRecentMeals();
+        } catch (err) {
+            showAlert(err.message, 'danger');
         }
     }
 
@@ -734,7 +929,7 @@
                 body: JSON.stringify(payload)
             });
             const created = await handleResponse(res);
-            showAlert(`Workout '${created.workoutType}' logged successfully! (${created.caloriesBurnt} kcal burnt)`);
+            showAlert(`Workout '${created.workoutType}' logged successfully! (${created.caloriesBurnt} kcal burnt, ${created.durationMinutes} mins)`);
             document.getElementById('workoutNotes').value = '';
             loadRecentWorkouts();
             loadDashboard();
@@ -748,22 +943,93 @@
             const res = await fetch(`${API_BASE}/dashboard/overview`);
             const data = await handleResponse(res);
             const workouts = data.recentWorkouts || [];
+            cachedWorkouts = workouts;
+
             const tbody = document.getElementById('workoutsTableBody');
             if (workouts.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No workouts logged yet.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No workouts logged yet.</td></tr>';
             } else {
                 tbody.innerHTML = workouts.map(w => `
                     <tr>
                         <td>${w.workoutDate}</td>
                         <td>${w.userName}</td>
                         <td><span class="badge bg-primary">${w.workoutType}</span></td>
-                        <td>${w.durationMinutes} mins</td>
+                        <td><strong>${w.durationMinutes} mins</strong></td>
                         <td class="text-danger fw-semibold">-${w.caloriesBurnt} kcal</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-success me-1" onclick="selectWorkoutForEdit(${w.id})">
+                                <i class="bi bi-clock-history"></i> Edit Time
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteWorkout(${w.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
                     </tr>
                 `).join('');
             }
         } catch (err) {
             console.error(err);
+        }
+    }
+
+    function selectWorkoutForEdit(workoutId) {
+        const w = cachedWorkouts.find(workout => workout.id === workoutId);
+        if (!w) return;
+
+        document.getElementById('editWorkoutId').value = w.id;
+        document.getElementById('editWorkoutUserId').value = w.userId;
+        document.getElementById('editWorkoutType').value = w.workoutType;
+        document.getElementById('editWorkoutDuration').value = w.durationMinutes;
+        document.getElementById('editWorkoutCalories').value = w.caloriesBurnt;
+        document.getElementById('editWorkoutDate').value = w.workoutDate;
+
+        document.getElementById('editWorkoutBox').classList.remove('d-none');
+        document.getElementById('editWorkoutBox').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelEditWorkout() {
+        document.getElementById('editWorkoutBox').classList.add('d-none');
+    }
+
+    async function updateWorkout(e) {
+        e.preventDefault();
+        const workoutId = document.getElementById('editWorkoutId').value;
+        const userId = document.getElementById('editWorkoutUserId').value;
+
+        try {
+            const payload = {
+                userId: parseInt(userId),
+                workoutType: document.getElementById('editWorkoutType').value,
+                durationMinutes: parseInt(document.getElementById('editWorkoutDuration').value),
+                caloriesBurnt: parseFloat(document.getElementById('editWorkoutCalories').value),
+                workoutDate: document.getElementById('editWorkoutDate').value
+            };
+
+            const res = await fetch(`${API_BASE}/workouts/${workoutId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const updated = await handleResponse(res);
+            showAlert(`Workout updated successfully! New Time/Duration: ${updated.durationMinutes} mins (PUT Request Succeeded)`);
+            cancelEditWorkout();
+            loadRecentWorkouts();
+            loadDashboard();
+        } catch (err) {
+            showAlert(`Workout update failed: ${err.message}`, 'danger');
+        }
+    }
+
+    async function deleteWorkout(workoutId) {
+        if (!confirm(`Delete workout log ID: ${workoutId}?`)) return;
+        try {
+            const res = await fetch(`${API_BASE}/workouts/${workoutId}`, { method: 'DELETE' });
+            await handleResponse(res);
+            showAlert(`Workout log ID ${workoutId} deleted. (DELETE Request Succeeded)`);
+            loadRecentWorkouts();
+            loadDashboard();
+        } catch (err) {
+            showAlert(err.message, 'danger');
         }
     }
 
@@ -802,7 +1068,7 @@
             const meals = data.recentMeals || [];
             const tbody = document.getElementById('mealsTableBody');
             if (meals.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No meals logged yet.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No meals logged yet.</td></tr>';
             } else {
                 tbody.innerHTML = meals.map(m => `
                     <tr>
@@ -811,11 +1077,29 @@
                         <td>${m.foodItem}</td>
                         <td><span class="badge bg-warning text-dark">${m.mealType}</span></td>
                         <td class="text-success fw-semibold">+${m.calories} kcal</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteMeal(${m.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
                     </tr>
                 `).join('');
             }
         } catch (err) {
             console.error(err);
+        }
+    }
+
+    async function deleteMeal(mealId) {
+        if (!confirm(`Delete meal log ID: ${mealId}?`)) return;
+        try {
+            const res = await fetch(`${API_BASE}/meals/${mealId}`, { method: 'DELETE' });
+            await handleResponse(res);
+            showAlert(`Meal log ID ${mealId} deleted. (DELETE Request Succeeded)`);
+            loadRecentMeals();
+            loadDashboard();
+        } catch (err) {
+            showAlert(err.message, 'danger');
         }
     }
 

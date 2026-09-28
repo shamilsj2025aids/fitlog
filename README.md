@@ -173,7 +173,7 @@ As instructed in the assessment specifications, these rules are **strictly enfor
    - Allows users to set weekly workout count targets (e.g. 5 workouts/week). Automatically tracks progress in real-time.
 
 ### Ideas to Go Further
-- **Google Gemini AI Fitness Coach:** `POST /api/chat` brings real-time, context-aware nutrition, workout routines, and calorie deficit advice powered by Google Gemini 1.5 Flash (with intelligent offline coaching fallback).
+- **Groq & Google Gemini AI Fitness Coach:** `POST /api/chat` brings real-time, context-aware nutrition, workout routines, and calorie deficit advice powered by Groq's high-speed AI engine (`openai/gpt-oss-120b`) and Google Gemini (with intelligent offline coaching fallback).
 - **System Overview Dashboard:** `GET /api/dashboard/overview` aggregates system-wide totals (total users, total workouts logged, total meals, total goals, cumulative calories burnt/consumed) and recent activity logs.
 - **Search & Filter Endpoints:**
   - `GET /api/workouts/filter?userId={id}&type={type}&startDate={date}&endDate={date}`
@@ -183,7 +183,7 @@ As instructed in the assessment specifications, these rules are **strictly enfor
 ### Note on OpenAPI vs OpenAI
 - **OpenAPI (Swagger):** An open, vendor-neutral specification standard for describing and documenting RESTful APIs. It provides the interactive documentation at `http://localhost:8080/swagger-ui.html`.
 - **OpenAI:** An independent commercial AI research company (creators of ChatGPT).
-- *FitLog uses OpenAPI for API documentation and Google Gemini 1.5 Flash for its AI Fitness Coach chatbot.*
+- *FitLog uses OpenAPI for API documentation and Groq AI / Google Gemini for its AI Fitness Coach chatbot.*
 
 ---
 

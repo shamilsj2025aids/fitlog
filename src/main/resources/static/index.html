@@ -608,7 +608,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                     <div>
                         <h5 class="fw-bold mb-0"><i class="bi bi-robot text-primary me-2"></i>FitLog AI Fitness &amp; Nutrition Coach</h5>
-                        <p class="text-muted small mb-0">Ask questions about workouts, calorie goals, macronutrients, and fat loss powered by Google Gemini AI.</p>
+                        <p class="text-muted small mb-0">Ask questions about workouts, calorie goals, macronutrients, and fat loss powered by Groq LLaMA 3.3 &amp; Gemini AI.</p>
                     </div>
                     <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#apiKeyCollapse">
                         <i class="bi bi-key me-1"></i> API Key Settings
@@ -617,12 +617,12 @@
 
                 <div class="collapse mb-3" id="apiKeyCollapse">
                     <div class="card card-body bg-light border">
-                        <label class="form-label small fw-semibold">Google Gemini API Key (Optional override if not in application.properties):</label>
+                        <label class="form-label small fw-semibold">AI API Key (Pre-configured with Groq; enter override if desired):</label>
                         <div class="input-group input-group-sm">
-                            <input type="password" class="form-control" id="chatApiKey" placeholder="Enter your Gemini API Key here...">
+                            <input type="password" class="form-control" id="chatApiKey" placeholder="Enter Groq Key (gsk_...) or Gemini Key...">
                             <button class="btn btn-primary" type="button" onclick="saveApiKey()">Save Key</button>
                         </div>
-                        <small class="text-muted mt-1">Saved in your local browser storage for convenience.</small>
+                        <small class="text-muted mt-1">Leave empty to use the server-configured Groq key, or enter your personal key.</small>
                     </div>
                 </div>
 
@@ -790,7 +790,7 @@
         userEditModalInstance = new bootstrap.Modal(document.getElementById('modalEditUser'));
         workoutEditModalInstance = new bootstrap.Modal(document.getElementById('modalEditWorkout'));
 
-        const savedKey = localStorage.getItem('fitlog_gemini_key');
+        const savedKey = localStorage.getItem('fitlog_ai_key') || localStorage.getItem('fitlog_gemini_key');
         if (savedKey) {
             document.getElementById('chatApiKey').value = savedKey;
         }
@@ -804,11 +804,12 @@
     function saveApiKey() {
         const key = document.getElementById('chatApiKey').value.trim();
         if (key) {
-            localStorage.setItem('fitlog_gemini_key', key);
-            showAlert('Gemini API Key saved for this session!');
+            localStorage.setItem('fitlog_ai_key', key);
+            showAlert('AI API Key saved for this session!');
         } else {
+            localStorage.removeItem('fitlog_ai_key');
             localStorage.removeItem('fitlog_gemini_key');
-            showAlert('Gemini API Key cleared.');
+            showAlert('AI API Key cleared. Server defaults will be used.');
         }
     }
 
@@ -1324,7 +1325,7 @@
         const message = input.value.trim();
         if (!message) return;
 
-        const apiKey = localStorage.getItem('fitlog_gemini_key') || document.getElementById('chatApiKey').value.trim();
+        const apiKey = localStorage.getItem('fitlog_ai_key') || localStorage.getItem('fitlog_gemini_key') || document.getElementById('chatApiKey').value.trim();
         const chatWindow = document.getElementById('chatWindow');
 
         // Append User Bubble

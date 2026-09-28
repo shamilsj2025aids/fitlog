@@ -65,9 +65,9 @@ Why was each tool chosen? Here is the exact technical rationale:
   - **OpenAI:** A private artificial intelligence research and deployment company that created ChatGPT and GPT models.
   - *They are two completely different things that sound similar.* OpenAPI is about API documentation, while OpenAI is about generative artificial intelligence.
 
-### H. Google Gemini 1.5 Flash AI Fitness Coach
-- **What it is:** A generative AI integration using Google's Gemini 1.5 Flash Large Language Model (LLM) via Spring Boot's modern `RestClient`.
-- **Why we use it:** To provide real-time, personalized fitness, nutrition, and workout advice directly within FitLog (Tab 7: `🤖 7. AI Coach`). It includes an intelligent built-in fallback rules engine so the chatbot responds even when no external internet connection or API key is configured.
+### H. Groq AI & Google Gemini AI Fitness Coach
+- **What it is:** A generative AI integration using Groq's high-speed inference engine (`openai/gpt-oss-120b` and `openai/gpt-oss-20b`) as well as Google Gemini 1.5 Flash via Spring Boot's modern `RestClient`.
+- **Why we use it:** To provide real-time, personalized fitness, nutrition, and workout advice directly within FitLog (Tab 7: `🤖 7. AI Coach`). Groq delivers sub-second inference speed for instant response times. It also includes an intelligent built-in fallback rules engine so the chatbot responds even when offline.
 
 ---
 
@@ -219,13 +219,13 @@ Why was each tool chosen? Here is the exact technical rationale:
 
 ---
 
-### Phase 9: AI Fitness & Nutrition Coach Integration (Google Gemini 1.5 Flash)
+### Phase 9: AI Fitness & Nutrition Coach Integration (Groq & Google Gemini)
 - **What was done:**
   - Designed `ChatRequest` and `ChatResponse` DTOs.
-  - Implemented `ChatService` and `GeminiChatServiceImpl` utilizing Spring Boot 3's `RestClient` to connect to `generativelanguage.googleapis.com` (Gemini 1.5 Flash).
-  - Built a fallback fitness expert engine so even without an external API key or internet access, users receive expert coaching on nutrition, workouts, recovery, and calorie deficits.
+  - Implemented `ChatService` and `ChatServiceImpl` utilizing Spring Boot 3's `RestClient` connecting directly to Groq's high-speed API (`openai/gpt-oss-120b`) and Google Gemini.
+  - Pre-configured the user's Groq API key in `application.properties` with fallback to offline expert coaching on nutrition, workouts, recovery, and calorie deficits.
   - Exposed REST endpoint `POST /api/chat` documented in OpenAPI / Swagger.
-  - Added modern interactive tab `🤖 7. AI Coach` in `index.html` with instant prompt chips, message bubbles, markdown-like list formatting, and a browser-persistent API Key configuration modal.
+  - Added modern interactive tab `🤖 7. AI Coach` in `index.html` with instant prompt chips, message bubbles, and a browser-persistent API Key configuration modal.
 
 ---
 

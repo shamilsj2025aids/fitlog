@@ -173,12 +173,12 @@ As instructed in the assessment specifications, these rules are **strictly enfor
    - Allows users to set weekly workout count targets (e.g. 5 workouts/week). Automatically tracks progress in real-time.
 
 ### Ideas to Go Further
-- **Groq & Google Gemini AI Fitness Coach:** `POST /api/chat` brings real-time, context-aware nutrition, workout routines, and calorie deficit advice powered by Groq's high-speed AI engine (`openai/gpt-oss-120b`) and Google Gemini (with intelligent offline coaching fallback).
+- **Groq & Google Gemini AI Fitness Coach:** `POST /api/chat` and `POST /api/chat/stream` bring real-time token-by-token streaming, Markdown formatting, and responsive table rendering for personalized nutrition, workout routines, and calorie deficit advice powered by Groq (`openai/gpt-oss-120b`) and Google Gemini (with intelligent offline coaching fallback).
 - **System Overview Dashboard:** `GET /api/dashboard/overview` aggregates system-wide totals (total users, total workouts logged, total meals, total goals, cumulative calories burnt/consumed) and recent activity logs.
 - **Search & Filter Endpoints:**
   - `GET /api/workouts/filter?userId={id}&type={type}&startDate={date}&endDate={date}`
   - `GET /api/meals/filter?userId={id}&mealType={type}&startDate={date}&endDate={date}`
-- **Interactive Browser UI:** Single-page dashboard at `http://localhost:8080/` with interactive modal editing and live AI chat for examiner demonstration.
+- **Interactive Browser UI:** Single-page dashboard at `http://localhost:8080/` with interactive modal editing, live streaming AI chat with markdown tables, and Swagger docs for examiner demonstration.
 
 ### Note on OpenAPI vs OpenAI
 - **OpenAPI (Swagger):** An open, vendor-neutral specification standard for describing and documenting RESTful APIs. It provides the interactive documentation at `http://localhost:8080/swagger-ui.html`.
@@ -209,7 +209,8 @@ As instructed in the assessment specifications, these rules are **strictly enfor
 | | `GET` | `/api/summaries/weekly-trend?userId={id}&weekStartDate={YYYY-MM-DD}` | **Core 4:** Weekly trend |
 | **Goals** | `POST` | `/api/goals` | **Core 5:** Set weekly goal |
 | | `GET` | `/api/goals/user/{userId}/active` | Get active goal progress |
-| **AI Coach** | `POST` | `/api/chat` | **AI:** Personalized workout & diet advice via Gemini |
+| **AI Coach** | `POST` | `/api/chat` | **AI:** Standard JSON response |
+| | `POST` | `/api/chat/stream` | **AI:** Real-time token streaming with Markdown tables |
 | **Dashboard**| `GET` | `/api/dashboard/overview` | **Idea:** System overview metrics |
 
 ---

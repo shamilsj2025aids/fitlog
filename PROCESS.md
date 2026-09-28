@@ -222,10 +222,15 @@ Why was each tool chosen? Here is the exact technical rationale:
 ### Phase 9: AI Fitness & Nutrition Coach Integration (Groq & Google Gemini)
 - **What was done:**
   - Designed `ChatRequest` and `ChatResponse` DTOs.
-  - Implemented `ChatService` and `ChatServiceImpl` utilizing Spring Boot 3's `RestClient` connecting directly to Groq's high-speed API (`openai/gpt-oss-120b`) and Google Gemini.
-  - Pre-configured the user's Groq API key in `application.properties` with fallback to offline expert coaching on nutrition, workouts, recovery, and calorie deficits.
-  - Exposed REST endpoint `POST /api/chat` documented in OpenAPI / Swagger.
-  - Added modern interactive tab `🤖 7. AI Coach` in `index.html` with instant prompt chips, message bubbles, and a browser-persistent API Key configuration modal.
+  - Implemented `ChatService` and `ChatServiceImpl` with support for Groq (`openai/gpt-oss-120b`) and Google Gemini.
+  - Built real-time token-by-token streaming endpoint `POST /api/chat/stream` using Spring MVC's `ResponseBodyEmitter` and Java's `java.net.http.HttpClient` SSE consumer.
+  - Implemented full Markdown and GitHub Flavored Markdown (GFM) table parser using `marked.js` and an offline regex fallback parser:
+    - Tables render inside responsive Bootstrap wrappers with clean alternating row stripes and headers.
+    - Bullet points, bold asterisks (`**`), headings (`###`), and line breaks are beautifully styled.
+    - Real-time animated typing cursor simulates live generative AI responses.
+  - Maintained backward-compatible non-streaming endpoint `POST /api/chat` for Swagger UI / OpenAPI testing.
+  - Added browser-stored key configuration in `index.html` allowing instant switching between Groq and Gemini keys.
+
 
 ---
 

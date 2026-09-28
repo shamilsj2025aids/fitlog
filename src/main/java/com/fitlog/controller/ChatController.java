@@ -12,9 +12,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
+
 @RestController
 @RequestMapping("/api/chat")
-@Tag(name = "AI Chatbot", description = "FitLog AI Fitness and Nutrition Coach powered by Google Gemini")
+@Tag(name = "AI Chatbot", description = "FitLog AI Fitness and Nutrition Coach powered by Groq & Gemini")
 public class ChatController {
 
     private final ChatService chatService;
@@ -28,4 +30,13 @@ public class ChatController {
     public ResponseEntity<ChatResponse> askCoach(@Valid @RequestBody ChatRequest request) {
         return ResponseEntity.ok(chatService.askFitnessCoach(request));
     }
+
+    @PostMapping(value = "/stream", produces = "text/plain;charset=UTF-8")
+    @Operation(summary = "Stream response from FitLog AI Coach token-by-token")
+    public ResponseBodyEmitter streamCoach(@Valid @RequestBody ChatRequest request) {
+        ResponseBodyEmitter emitter = new ResponseBodyEmitter(180_000L);
+        chatService.streamFitnessCoach(request, emitter);
+        return emitter;
+    }
 }
+

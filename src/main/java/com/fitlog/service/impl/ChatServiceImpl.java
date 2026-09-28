@@ -11,9 +11,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class ChatServiceImpl implements ChatService {
@@ -82,6 +93,142 @@ public class ChatServiceImpl implements ChatService {
         // 3. Fallback when no API keys are provided
         return getOfflineCoachingResponse(userMsg);
     }
+
+    @Override
+    public void streamFitnessCoach(ChatRequest request, ResponseBodyEmitter emitter) {
+        String userMsg = request.getMessage() != null ? request.getMessage().trim() : "";
+        if (userMsg.isEmpty()) {
+            try {
+                emitter.send("Please ask a question regarding workouts, nutrition, or calorie goals!");
+                emitter.complete();
+            } catch (Exception ignored) {}
+            return;
+        }
+
+        String userSuppliedKey = request.getApiKey() != null ? request.getApiKey().trim() : "";
+        String groqKeyToUse = userSuppliedKey.startsWith("gsk_") ? userSuppliedKey : configuredGroqKey;
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                if (hasValidKey(groqKeyToUse)) {
+                    try {
+                        streamGroqApi(userMsg, groqKeyToUse, groqModel, emitter);
+                        return;
+                    } catch (Exception ex) {
+                        log.warn("Groq streaming primary model failed: {}. Retrying fallback openai/gpt-oss-20b...", ex.getMessage());
+                        try {
+                            streamGroqApi(userMsg, groqKeyToUse, "openai/gpt-oss-20b", emitter);
+                            return;
+                        } catch (Exception ex2) {
+                            log.error("Groq streaming fallback failed: {}", ex2.getMessage());
+                            emitter.send("*(Note: Groq stream failed: " + ex2.getMessage() + ". Showing offline coach advice:)*\n\n");
+                        }
+                    }
+                }
+
+                // Try Gemini if available
+                String geminiKeyToUse = userSuppliedKey.startsWith("AIza") ? userSuppliedKey : configuredGeminiKey;
+                if (hasValidKey(geminiKeyToUse)) {
+                    try {
+                        ChatResponse geminiRes = callGeminiApi(userMsg, geminiKeyToUse);
+                        streamWords(geminiRes.getReply(), emitter);
+                        return;
+                    } catch (Exception ex) {
+                        log.error("Gemini stream error: {}", ex.getMessage());
+                    }
+                }
+
+                // Offline fallback streaming
+                ChatResponse fallback = getOfflineCoachingResponse(userMsg);
+                streamWords(fallback.getReply(), emitter);
+
+            } catch (Exception ex) {
+                log.error("Fatal error in streamFitnessCoach: {}", ex.getMessage(), ex);
+                try {
+                    emitter.completeWithError(ex);
+                } catch (Exception ignored) {}
+            }
+        });
+    }
+
+    private void streamWords(String text, ResponseBodyEmitter emitter) {
+        try {
+            if (text == null) {
+                emitter.complete();
+                return;
+            }
+            String[] words = text.split("(?<=\\s)|(?<=\\n)");
+            for (String word : words) {
+                emitter.send(word);
+                Thread.sleep(15);
+            }
+            emitter.complete();
+        } catch (Exception ignored) {
+            try { emitter.complete(); } catch (Exception ignored2) {}
+        }
+    }
+
+    private void streamGroqApi(String userMessage, String apiKey, String model, ResponseBodyEmitter emitter) throws Exception {
+        Map<String, Object> body = Map.of(
+                "model", model,
+                "stream", true,
+                "messages", List.of(
+                        Map.of("role", "system", "content", SYSTEM_PROMPT),
+                        Map.of("role", "user", "content", userMessage)
+                ),
+                "temperature", 0.7,
+                "max_tokens", 1000
+        );
+
+        String jsonPayload = objectMapper.writeValueAsString(body);
+
+        HttpClient client = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(12))
+                .build();
+
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.groq.com/openai/v1/chat/completions"))
+                .header("Authorization", "Bearer " + apiKey)
+                .header("Content-Type", "application/json")
+                .header("Accept", "text/event-stream")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonPayload, StandardCharsets.UTF_8))
+                .timeout(Duration.ofSeconds(60))
+                .build();
+
+        HttpResponse<InputStream> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
+
+        if (response.statusCode() >= 400) {
+            String errBody = new String(response.body().readAllBytes(), StandardCharsets.UTF_8);
+            throw new RuntimeException("HTTP " + response.statusCode() + ": " + errBody);
+        }
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(response.body(), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.isEmpty() || line.startsWith(":")) {
+                    continue;
+                }
+                if (line.startsWith("data: ")) {
+                    String data = line.substring(6).trim();
+                    if ("[DONE]".equals(data)) {
+                        break;
+                    }
+                    try {
+                        JsonNode node = objectMapper.readTree(data);
+                        JsonNode contentNode = node.at("/choices/0/delta/content");
+                        if (!contentNode.isMissingNode() && !contentNode.isNull()) {
+                            String token = contentNode.asText();
+                            emitter.send(token);
+                        }
+                    } catch (Exception ignored) {
+                        // ignore non-json chunk
+                    }
+                }
+            }
+        }
+        emitter.complete();
+    }
+
 
     private boolean hasValidKey(String key) {
         return key != null && !key.isBlank() && !key.contains("YOUR_") && !key.equalsIgnoreCase("none");

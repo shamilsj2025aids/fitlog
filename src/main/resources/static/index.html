@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitLog — Personal Workout and Calorie Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #059669;
+            --accent-color: #f59e0b;
+            --bg-color: #f8fafc;
+        }
+        body {
+            background-color: var(--bg-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #1e293b;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #1e3a8a, #2563eb);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .stat-card {
+            border: none;
+            border-radius: 12px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+        .card-custom {
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            background: #ffffff;
+        }
+        .nav-pills .nav-link.active {
+            background-color: var(--primary-color);
+        }
+        .badge-calorie-in {
+            background-color: #10b981;
+        }
+        .badge-calorie-out {
+            background-color: #ef4444;
+        }
+        .alert-pre {
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 0.88rem;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg navbar-dark py-3">
+    <div class="container">
+        <a class="navbar-brand fw-bold fs-4 d-flex align-items-center gap-2" href="#">
+            <i class="bi bi-activity text-warning fs-3"></i> FitLog
+        </a>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-light text-dark px-3 py-2 rounded-pill fw-normal">Project Leap: Java &amp; DBMS</span>
+            <a href="/swagger-ui.html" target="_blank" class="btn btn-warning btn-sm fw-semibold">
+                <i class="bi bi-box-arrow-up-right me-1"></i> Swagger API Docs
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="container my-4">
+    <!-- Header / Objective Banner -->
+    <div class="card card-custom p-4 mb-4 border-start border-primary border-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h4 class="fw-bold mb-1">Personal Workout &amp; Calorie Tracker</h4>
+                <p class="text-muted mb-0 small">Log daily workouts and meals, enforce non-negative calorie validation, view daily balances, and track weekly workout trends.</p>
+            </div>
+            <button class="btn btn-outline-primary btn-sm" onclick="loadDashboard()">
+                <i class="bi bi-arrow-clockwise me-1"></i> Refresh System Stats
+            </button>
+        </div>
+    </div>
+
+    <!-- Quick Stats Overview Cards -->
+    <div class="row g-3 mb-4" id="statsRow">
+        <div class="col-md-3 col-6">
+            <div class="card stat-card bg-primary text-white p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-white-50 small">Total Users</div>
+                        <h3 class="fw-bold mb-0" id="statUsers">0</h3>
+                    </div>
+                    <i class="bi bi-people fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card stat-card bg-success text-white p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-white-50 small">Workouts Logged</div>
+                        <h3 class="fw-bold mb-0" id="statWorkouts">0</h3>
+                    </div>
+                    <i class="bi bi-fire fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card stat-card bg-warning text-dark p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-dark-50 small">Meals Logged</div>
+                        <h3 class="fw-bold mb-0" id="statMeals">0</h3>
+                    </div>
+                    <i class="bi bi-egg-fried fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card stat-card bg-info text-white p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-white-50 small">Weekly Goals Set</div>
+                        <h3 class="fw-bold mb-0" id="statGoals">0</h3>
+                    </div>
+                    <i class="bi bi-trophy fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert / Feedback Area -->
+    <div id="alertBox" class="alert d-none alert-dismissible fade show" role="alert">
+        <span id="alertMessage"></span>
+        <button type="button" class="btn-close" onclick="hideAlert()"></button>
+    </div>
+
+    <!-- Feature Navigation Tabs -->
+    <ul class="nav nav-pills mb-4 nav-justified bg-white p-2 rounded-3 shadow-sm border" id="pills-tab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-users-tab" data-bs-toggle="pill" data-bs-target="#tab-users" type="button" role="tab">
+                <i class="bi bi-person-plus me-1"></i> 1. Users
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-workouts-tab" data-bs-toggle="pill" data-bs-target="#tab-workouts" type="button" role="tab">
+                <i class="bi bi-lightning-charge me-1"></i> 2. Log Workout
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-meals-tab" data-bs-toggle="pill" data-bs-target="#tab-meals" type="button" role="tab">
+                <i class="bi bi-cup-hot me-1"></i> 3. Log Meal
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-daily-tab" data-bs-toggle="pill" data-bs-target="#tab-daily" type="button" role="tab">
+                <i class="bi bi-calendar-check me-1"></i> 4. Daily Summary
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-weekly-tab" data-bs-toggle="pill" data-bs-target="#tab-weekly" type="button" role="tab">
+                <i class="bi bi-graph-up-arrow me-1"></i> 5. Weekly Trend &amp; Goals
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-filter-tab" data-bs-toggle="pill" data-bs-target="#tab-filter" type="button" role="tab">
+                <i class="bi bi-funnel me-1"></i> 6. Search &amp; Filter
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Contents -->
+    <div class="tab-content" id="pills-tabContent">
+
+        <!-- TAB 1: USERS -->
+        <div class="tab-pane fade show active" id="tab-users" role="tabpanel">
+            <div class="row g-4">
+                <div class="col-md-5">
+                    <div class="card card-custom p-4">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-person-fill-add text-primary me-2"></i>Register New User</h5>
+                        <form id="formUser" onsubmit="createUser(event)">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Full Name *</label>
+                                <input type="text" class="form-control" id="userName" required placeholder="e.g. Alex Johnson">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Email Address *</label>
+                                <input type="email" class="form-control" id="userEmail" required placeholder="e.g. alex@example.com">
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-4">
+                                    <label class="form-label small fw-semibold">Age</label>
+                                    <input type="number" class="form-control" id="userAge" placeholder="25" min="1">
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small fw-semibold">Weight (kg)</label>
+                                    <input type="number" step="0.1" class="form-control" id="userWeight" placeholder="70.5" min="1">
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small fw-semibold">Height (cm)</label>
+                                    <input type="number" step="0.1" class="form-control" id="userHeight" placeholder="175" min="1">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Gender</label>
+                                <select class="form-select" id="userGender">
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Create User</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <div class="card card-custom p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0"><i class="bi bi-people-fill text-primary me-2"></i>Registered Users</h5>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="loadUsers()">Refresh</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Age</th>
+                                        <th>Weight</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                    <tr><td colspan="5" class="text-center text-muted">No users found. Please create one.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: WORKOUTS -->
+        <div class="tab-pane fade" id="tab-workouts" role="tabpanel">
+            <div class="row g-4">
+                <div class="col-md-5">
+                    <div class="card card-custom p-4">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-plus-circle text-success me-2"></i>Core Feature 1: Log Workout</h5>
+                        <form id="formWorkout" onsubmit="createWorkout(event)">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Select User *</label>
+                                <select class="form-select user-select" id="workoutUserId" required></select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Workout Type *</label>
+                                <select class="form-select" id="workoutType" required>
+                                    <option value="Running">Running</option>
+                                    <option value="Cycling">Cycling</option>
+                                    <option value="Weight Training">Weight Training</option>
+                                    <option value="Swimming">Swimming</option>
+                                    <option value="HIIT">HIIT</option>
+                                    <option value="Yoga">Yoga</option>
+                                    <option value="Walking">Walking</option>
+                                </select>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <label class="form-label small fw-semibold">Duration (mins) *</label>
+                                    <input type="number" class="form-control" id="workoutDuration" required placeholder="45" min="1">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-semibold">Calories Burnt *</label>
+                                    <input type="number" step="0.1" class="form-control" id="workoutCalories" required placeholder="350">
+                                    <small class="text-muted" style="font-size: 0.75rem;">Rule: Must be &ge; 0</small>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Workout Date *</label>
+                                <input type="date" class="form-control" id="workoutDate" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Notes (Optional)</label>
+                                <input type="text" class="form-control" id="workoutNotes" placeholder="Felt great, pushed 5km!">
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">Log Workout</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <div class="card card-custom p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0"><i class="bi bi-clock-history text-success me-2"></i>Workout History</h5>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="loadRecentWorkouts()">Refresh</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>User</th>
+                                        <th>Type</th>
+                                        <th>Duration</th>
+                                        <th>Burnt</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="workoutsTableBody">
+                                    <tr><td colspan="5" class="text-center text-muted">No workouts logged yet.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: MEALS -->
+        <div class="tab-pane fade" id="tab-meals" role="tabpanel">
+            <div class="row g-4">
+                <div class="col-md-5">
+                    <div class="card card-custom p-4">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-plus-circle text-warning me-2"></i>Core Feature 2: Log Meal</h5>
+                        <form id="formMeal" onsubmit="createMeal(event)">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Select User *</label>
+                                <select class="form-select user-select" id="mealUserId" required></select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Food Item *</label>
+                                <input type="text" class="form-control" id="mealFoodItem" required placeholder="e.g. Oatmeal with Almonds">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Meal Type *</label>
+                                <select class="form-select" id="mealType" required>
+                                    <option value="BREAKFAST">BREAKFAST</option>
+                                    <option value="LUNCH">LUNCH</option>
+                                    <option value="DINNER">DINNER</option>
+                                    <option value="SNACK">SNACK</option>
+                                </select>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <label class="form-label small fw-semibold">Quantity (g/serving)</label>
+                                    <input type="number" step="0.1" class="form-control" id="mealQuantity" placeholder="150">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-semibold">Calories Consumed *</label>
+                                    <input type="number" step="0.1" class="form-control" id="mealCalories" required placeholder="420">
+                                    <small class="text-muted" style="font-size: 0.75rem;">Rule: Must be &ge; 0</small>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Meal Date *</label>
+                                <input type="date" class="form-control" id="mealDate" required>
+                            </div>
+                            <button type="submit" class="btn btn-warning w-100">Log Meal</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <div class="card card-custom p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0"><i class="bi bi-egg-fried text-warning me-2"></i>Meal History</h5>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="loadRecentMeals()">Refresh</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>User</th>
+                                        <th>Food Item</th>
+                                        <th>Type</th>
+                                        <th>Calories</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mealsTableBody">
+                                    <tr><td colspan="5" class="text-center text-muted">No meals logged yet.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: DAILY SUMMARY -->
+        <div class="tab-pane fade" id="tab-daily" role="tabpanel">
+            <div class="card card-custom p-4 mb-4">
+                <h5 class="fw-bold mb-3"><i class="bi bi-calendar2-day text-primary me-2"></i>Core Feature 3: Daily Summary of Calories In vs. Calories Out</h5>
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Select User *</label>
+                        <select class="form-select user-select" id="dailyUserId" required></select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Summary Date</label>
+                        <input type="date" class="form-control" id="dailyDate">
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-primary w-100" onclick="fetchDailySummary()">
+                            <i class="bi bi-search me-1"></i> Calculate Daily Summary
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="dailyResultsArea" class="d-none">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="card stat-card bg-success text-white p-3 text-center">
+                            <div class="text-white-50">Calories In (Consumed)</div>
+                            <h2 class="fw-bold mb-0" id="dailyCaloriesIn">0</h2>
+                            <small id="dailyMealCount">0 meals</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card stat-card bg-danger text-white p-3 text-center">
+                            <div class="text-white-50">Calories Out (Burnt)</div>
+                            <h2 class="fw-bold mb-0" id="dailyCaloriesOut">0</h2>
+                            <small id="dailyWorkoutCount">0 workouts</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card stat-card bg-dark text-white p-3 text-center">
+                            <div class="text-white-50">Net Calories (In - Out)</div>
+                            <h2 class="fw-bold mb-0" id="dailyNetCalories">0</h2>
+                            <span class="badge bg-light text-dark mt-1" id="dailyBalanceBadge">BALANCED</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card card-custom p-3">
+                            <h6 class="fw-bold text-success"><i class="bi bi-egg-fried me-1"></i>Meals Consumed</h6>
+                            <ul class="list-group list-group-flush" id="dailyMealsList"></ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card card-custom p-3">
+                            <h6 class="fw-bold text-danger"><i class="bi bi-fire me-1"></i>Workouts Completed</h6>
+                            <ul class="list-group list-group-flush" id="dailyWorkoutsList"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: WEEKLY TREND & GOALS -->
+        <div class="tab-pane fade" id="tab-weekly" role="tabpanel">
+            <div class="row g-4 mb-4">
+                <div class="col-md-5">
+                    <div class="card card-custom p-4">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-flag-fill text-primary me-2"></i>Core Feature 5: Set Weekly Goal</h5>
+                        <form id="formGoal" onsubmit="createGoal(event)">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Select User *</label>
+                                <select class="form-select user-select" id="goalUserId" required></select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Target Weekly Workout Count *</label>
+                                <input type="number" class="form-control" id="goalTarget" required min="1" placeholder="e.g. 5">
+                                <small class="text-muted" style="font-size: 0.75rem;">Rule: Must be greater than 0</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Week Start Date (Monday)</label>
+                                <input type="date" class="form-control" id="goalStartDate">
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Set Goal</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="col-md-7">
+                    <div class="card card-custom p-4">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-graph-up text-primary me-2"></i>Core Feature 4: View Weekly Trend</h5>
+                        <div class="alert alert-info py-2 small mb-3">
+                            <i class="bi bi-info-circle me-1"></i> <strong>Business Rule Enforced:</strong> A weekly summary is only generated once at least one entry exists for that week.
+                        </div>
+                        <div class="row g-2 align-items-end mb-3">
+                            <div class="col-sm-5">
+                                <label class="form-label small fw-semibold">Select User *</label>
+                                <select class="form-select user-select" id="trendUserId" required></select>
+                            </div>
+                            <div class="col-sm-4">
+                                <label class="form-label small fw-semibold">Week Start Date</label>
+                                <input type="date" class="form-control" id="trendStartDate">
+                            </div>
+                            <div class="col-sm-3">
+                                <button class="btn btn-outline-primary w-100" onclick="fetchWeeklyTrend()">
+                                    <i class="bi bi-bar-chart me-1"></i> View Trend
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="trendResultsArea" class="d-none">
+                            <div class="p-3 bg-light rounded-3 mb-3 border">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-bold" id="trendWeekRange">Week: </span>
+                                    <span class="badge bg-primary" id="trendGoalBadge">Goal Status</span>
+                                </div>
+                                <div class="row text-center g-2">
+                                    <div class="col-4">
+                                        <div class="text-muted small">Workouts</div>
+                                        <div class="fw-bold fs-5 text-primary" id="trendTotalWorkouts">0</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="text-muted small">Duration</div>
+                                        <div class="fw-bold fs-5 text-secondary" id="trendTotalDuration">0 mins</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="text-muted small">Calories Burnt</div>
+                                        <div class="fw-bold fs-5 text-danger" id="trendTotalCalories">0 kcal</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered text-center align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Day</th>
+                                            <th>Date</th>
+                                            <th>Workouts</th>
+                                            <th>Duration</th>
+                                            <th>Burnt</th>
+                                            <th>Consumed</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="trendBreakdownBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 6: SEARCH & FILTER -->
+        <div class="tab-pane fade" id="tab-filter" role="tabpanel">
+            <div class="card card-custom p-4 mb-4">
+                <h5 class="fw-bold mb-3"><i class="bi bi-funnel-fill text-primary me-2"></i>Idea to Go Further: Search &amp; Filter Workouts and Meals</h5>
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold">User</label>
+                        <select class="form-select user-select" id="filterUserId">
+                            <option value="">All Users</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold">Workout Type</label>
+                        <input type="text" class="form-control" id="filterWorkoutType" placeholder="e.g. Running, HIIT">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold">Start Date</label>
+                        <input type="date" class="form-control" id="filterStartDate">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold">End Date</label>
+                        <input type="date" class="form-control" id="filterEndDate">
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100" onclick="applyFilter()">
+                            <i class="bi bi-filter me-1"></i> Filter
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-custom p-4">
+                <h6 class="fw-bold mb-3">Filtered Workouts Result</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>User</th>
+                                <th>Type</th>
+                                <th>Duration</th>
+                                <th>Calories Burnt</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="filteredTableBody">
+                            <tr><td colspan="6" class="text-center text-muted">Click 'Filter' to view matching records.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const API_BASE = '/api';
+
+    // Set today as default date in inputs
+    document.addEventListener("DOMContentLoaded", () => {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('workoutDate').value = today;
+        document.getElementById('mealDate').value = today;
+        document.getElementById('dailyDate').value = today;
+        document.getElementById('goalStartDate').value = today;
+        document.getElementById('trendStartDate').value = today;
+
+        loadDashboard();
+        loadUsers();
+        loadRecentWorkouts();
+        loadRecentMeals();
+    });
+
+    function showAlert(message, type = 'success') {
+        const alertBox = document.getElementById('alertBox');
+        alertBox.className = `alert alert-${type} alert-dismissible fade show`;
+        document.getElementById('alertMessage').innerText = message;
+        alertBox.classList.remove('d-none');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function hideAlert() {
+        document.getElementById('alertBox').classList.add('d-none');
+    }
+
+    async function handleResponse(res) {
+        const data = await res.json();
+        if (!res.ok) {
+            let msg = data.message || 'Error occurred';
+            if (data.fieldErrors) {
+                msg += '\n' + Object.entries(data.fieldErrors).map(([f, e]) => `${f}: ${e}`).join(', ');
+            }
+            throw new Error(msg);
+        }
+        return data;
+    }
+
+    async function loadDashboard() {
+        try {
+            const res = await fetch(`${API_BASE}/dashboard/overview`);
+            const data = await handleResponse(res);
+            document.getElementById('statUsers').innerText = data.totalUsersCount || 0;
+            document.getElementById('statWorkouts').innerText = data.totalWorkoutsLogged || 0;
+            document.getElementById('statMeals').innerText = data.totalMealsLogged || 0;
+            document.getElementById('statGoals').innerText = data.totalGoalsSet || 0;
+        } catch (err) {
+            console.warn('Dashboard load error:', err);
+        }
+    }
+
+    async function loadUsers() {
+        try {
+            const res = await fetch(`${API_BASE}/users`);
+            const users = await handleResponse(res);
+            
+            // Populate select dropdowns
+            const userSelects = document.querySelectorAll('.user-select');
+            userSelects.forEach(select => {
+                const currentVal = select.value;
+                const isFilter = select.id === 'filterUserId';
+                select.innerHTML = isFilter ? '<option value="">All Users</option>' : '';
+                users.forEach(u => {
+                    const opt = document.createElement('option');
+                    opt.value = u.id;
+                    opt.text = `${u.name} (ID: ${u.id})`;
+                    select.appendChild(opt);
+                });
+                if (currentVal) select.value = currentVal;
+            });
+
+            // Populate users table
+            const tbody = document.getElementById('usersTableBody');
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No users found. Please create one.</td></tr>';
+            } else {
+                tbody.innerHTML = users.map(u => `
+                    <tr>
+                        <td><strong>${u.id}</strong></td>
+                        <td>${u.name}</td>
+                        <td>${u.email}</td>
+                        <td>${u.age || '-'}</td>
+                        <td>${u.weightKg ? u.weightKg + ' kg' : '-'}</td>
+                    </tr>
+                `).join('');
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function createUser(e) {
+        e.preventDefault();
+        try {
+            const payload = {
+                name: document.getElementById('userName').value,
+                email: document.getElementById('userEmail').value,
+                age: document.getElementById('userAge').value ? parseInt(document.getElementById('userAge').value) : null,
+                weightKg: document.getElementById('userWeight').value ? parseFloat(document.getElementById('userWeight').value) : null,
+                heightCm: document.getElementById('userHeight').value ? parseFloat(document.getElementById('userHeight').value) : null,
+                gender: document.getElementById('userGender').value
+            };
+            const res = await fetch(`${API_BASE}/users`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const created = await handleResponse(res);
+            showAlert(`User '${created.name}' registered successfully with ID: ${created.id}`);
+            document.getElementById('formUser').reset();
+            loadUsers();
+            loadDashboard();
+        } catch (err) {
+            showAlert(err.message, 'danger');
+        }
+    }
+
+    async function createWorkout(e) {
+        e.preventDefault();
+        try {
+            const payload = {
+                userId: document.getElementById('workoutUserId').value,
+                workoutType: document.getElementById('workoutType').value,
+                durationMinutes: parseInt(document.getElementById('workoutDuration').value),
+                caloriesBurnt: parseFloat(document.getElementById('workoutCalories').value),
+                workoutDate: document.getElementById('workoutDate').value,
+                notes: document.getElementById('workoutNotes').value
+            };
+            const res = await fetch(`${API_BASE}/workouts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const created = await handleResponse(res);
+            showAlert(`Workout '${created.workoutType}' logged successfully! (${created.caloriesBurnt} kcal burnt)`);
+            document.getElementById('workoutNotes').value = '';
+            loadRecentWorkouts();
+            loadDashboard();
+        } catch (err) {
+            showAlert(`Failed to log workout: ${err.message}`, 'danger');
+        }
+    }
+
+    async function loadRecentWorkouts() {
+        try {
+            const res = await fetch(`${API_BASE}/dashboard/overview`);
+            const data = await handleResponse(res);
+            const workouts = data.recentWorkouts || [];
+            const tbody = document.getElementById('workoutsTableBody');
+            if (workouts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No workouts logged yet.</td></tr>';
+            } else {
+                tbody.innerHTML = workouts.map(w => `
+                    <tr>
+                        <td>${w.workoutDate}</td>
+                        <td>${w.userName}</td>
+                        <td><span class="badge bg-primary">${w.workoutType}</span></td>
+                        <td>${w.durationMinutes} mins</td>
+                        <td class="text-danger fw-semibold">-${w.caloriesBurnt} kcal</td>
+                    </tr>
+                `).join('');
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function createMeal(e) {
+        e.preventDefault();
+        try {
+            const payload = {
+                userId: document.getElementById('mealUserId').value,
+                foodItem: document.getElementById('mealFoodItem').value,
+                mealType: document.getElementById('mealType').value,
+                quantity: document.getElementById('mealQuantity').value ? parseFloat(document.getElementById('mealQuantity').value) : null,
+                calories: parseFloat(document.getElementById('mealCalories').value),
+                mealDate: document.getElementById('mealDate').value
+            };
+            const res = await fetch(`${API_BASE}/meals`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const created = await handleResponse(res);
+            showAlert(`Meal '${created.foodItem}' logged successfully! (+${created.calories} kcal)`);
+            document.getElementById('mealFoodItem').value = '';
+            document.getElementById('mealQuantity').value = '';
+            document.getElementById('mealCalories').value = '';
+            loadRecentMeals();
+            loadDashboard();
+        } catch (err) {
+            showAlert(`Failed to log meal: ${err.message}`, 'danger');
+        }
+    }
+
+    async function loadRecentMeals() {
+        try {
+            const res = await fetch(`${API_BASE}/dashboard/overview`);
+            const data = await handleResponse(res);
+            const meals = data.recentMeals || [];
+            const tbody = document.getElementById('mealsTableBody');
+            if (meals.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No meals logged yet.</td></tr>';
+            } else {
+                tbody.innerHTML = meals.map(m => `
+                    <tr>
+                        <td>${m.mealDate}</td>
+                        <td>${m.userName}</td>
+                        <td>${m.foodItem}</td>
+                        <td><span class="badge bg-warning text-dark">${m.mealType}</span></td>
+                        <td class="text-success fw-semibold">+${m.calories} kcal</td>
+                    </tr>
+                `).join('');
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function fetchDailySummary() {
+        const userId = document.getElementById('dailyUserId').value;
+        const date = document.getElementById('dailyDate').value;
+        if (!userId) {
+            showAlert('Please select a user first.', 'warning');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/summaries/daily?userId=${userId}&date=${date}`);
+            const data = await handleResponse(res);
+
+            document.getElementById('dailyCaloriesIn').innerText = `${data.caloriesIn} kcal`;
+            document.getElementById('dailyCaloriesOut').innerText = `${data.caloriesOut} kcal`;
+            document.getElementById('dailyNetCalories').innerText = `${data.netCalories > 0 ? '+' : ''}${data.netCalories} kcal`;
+            document.getElementById('dailyMealCount').innerText = `${data.mealCount} meals logged`;
+            document.getElementById('dailyWorkoutCount').innerText = `${data.workoutCount} workouts (${data.totalWorkoutMinutes}m)`;
+
+            const badge = document.getElementById('dailyBalanceBadge');
+            badge.innerText = data.balanceStatus;
+            badge.className = `badge mt-1 ${data.balanceStatus === 'CALORIE SURPLUS' ? 'bg-warning text-dark' : (data.balanceStatus === 'CALORIE DEFICIT' ? 'bg-success' : 'bg-secondary')}`;
+
+            // Meals list
+            const mealsList = document.getElementById('dailyMealsList');
+            mealsList.innerHTML = data.meals.length === 0
+                ? '<li class="list-group-item text-muted">No meals logged for this date.</li>'
+                : data.meals.map(m => `<li class="list-group-item d-flex justify-content-between align-items-center"><span>${m.foodItem} (${m.mealType})</span><span class="badge bg-success">+${m.calories} kcal</span></li>`).join('');
+
+            // Workouts list
+            const workoutsList = document.getElementById('dailyWorkoutsList');
+            workoutsList.innerHTML = data.workouts.length === 0
+                ? '<li class="list-group-item text-muted">No workouts logged for this date.</li>'
+                : data.workouts.map(w => `<li class="list-group-item d-flex justify-content-between align-items-center"><span>${w.workoutType} (${w.durationMinutes}m)</span><span class="badge bg-danger">-${w.caloriesBurnt} kcal</span></li>`).join('');
+
+            document.getElementById('dailyResultsArea').classList.remove('d-none');
+        } catch (err) {
+            showAlert(err.message, 'danger');
+        }
+    }
+
+    async function createGoal(e) {
+        e.preventDefault();
+        try {
+            const payload = {
+                userId: document.getElementById('goalUserId').value,
+                targetWorkoutCount: parseInt(document.getElementById('goalTarget').value),
+                weekStartDate: document.getElementById('goalStartDate').value
+            };
+            const res = await fetch(`${API_BASE}/goals`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const created = await handleResponse(res);
+            showAlert(`Weekly goal set: ${created.targetWorkoutCount} workouts for week of ${created.weekStartDate}!`);
+            loadDashboard();
+        } catch (err) {
+            showAlert(`Failed to set goal: ${err.message}`, 'danger');
+        }
+    }
+
+    async function fetchWeeklyTrend() {
+        const userId = document.getElementById('trendUserId').value;
+        const startDate = document.getElementById('trendStartDate').value;
+        if (!userId) {
+            showAlert('Please select a user first.', 'warning');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/summaries/weekly-trend?userId=${userId}&weekStartDate=${startDate}`);
+            const data = await handleResponse(res);
+
+            document.getElementById('trendWeekRange').innerText = `Week: ${data.weekStartDate} to ${data.weekEndDate}`;
+            document.getElementById('trendTotalWorkouts').innerText = data.totalWorkoutsCompleted;
+            document.getElementById('trendTotalDuration').innerText = `${data.totalDurationMinutes} mins`;
+            document.getElementById('trendTotalCalories').innerText = `${data.totalCaloriesBurnt} kcal`;
+
+            const goalBadge = document.getElementById('trendGoalBadge');
+            if (data.goalSummary) {
+                goalBadge.innerText = `Goal: ${data.goalSummary.achievedWorkoutCount}/${data.goalSummary.targetWorkoutCount} workouts (${data.goalSummary.isGoalAchieved ? 'ACHIEVED' : data.goalSummary.remainingWorkouts + ' left'})`;
+                goalBadge.className = `badge ${data.goalSummary.isGoalAchieved ? 'bg-success' : 'bg-warning text-dark'}`;
+            } else {
+                goalBadge.innerText = 'No Goal Set for this week';
+                goalBadge.className = 'badge bg-secondary';
+            }
+
+            const tbody = document.getElementById('trendBreakdownBody');
+            tbody.innerHTML = data.dailyBreakdowns.map(d => `
+                <tr>
+                    <td class="fw-semibold">${d.dayOfWeek}</td>
+                    <td>${d.date}</td>
+                    <td><span class="badge ${d.workoutCount > 0 ? 'bg-primary' : 'bg-light text-dark'}">${d.workoutCount}</span></td>
+                    <td>${d.durationMinutes}m</td>
+                    <td class="text-danger">${d.caloriesBurnt}</td>
+                    <td class="text-success">${d.caloriesConsumed}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('trendResultsArea').classList.remove('d-none');
+        } catch (err) {
+            showAlert(err.message, 'danger');
+            document.getElementById('trendResultsArea').classList.add('d-none');
+        }
+    }
+
+    async function applyFilter() {
+        const userId = document.getElementById('filterUserId').value;
+        const type = document.getElementById('filterWorkoutType').value;
+        const start = document.getElementById('filterStartDate').value;
+        const end = document.getElementById('filterEndDate').value;
+
+        const params = new URLSearchParams();
+        if (userId) params.append('userId', userId);
+        if (type) params.append('type', type);
+        if (start) params.append('startDate', start);
+        if (end) params.append('endDate', end);
+
+        try {
+            const res = await fetch(`${API_BASE}/workouts/filter?${params.toString()}`);
+            const workouts = await handleResponse(res);
+            const tbody = document.getElementById('filteredTableBody');
+            if (workouts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No matching workouts found.</td></tr>';
+            } else {
+                tbody.innerHTML = workouts.map(w => `
+                    <tr>
+                        <td>${w.workoutDate}</td>
+                        <td>${w.userName}</td>
+                        <td><span class="badge bg-primary">${w.workoutType}</span></td>
+                        <td>${w.durationMinutes} mins</td>
+                        <td class="text-danger fw-semibold">-${w.caloriesBurnt} kcal</td>
+                        <td>${w.notes || '-'}</td>
+                    </tr>
+                `).join('');
+            }
+        } catch (err) {
+            showAlert(err.message, 'danger');
+        }
+    }
+</script>
+</body>
+</html>

@@ -173,11 +173,17 @@ As instructed in the assessment specifications, these rules are **strictly enfor
    - Allows users to set weekly workout count targets (e.g. 5 workouts/week). Automatically tracks progress in real-time.
 
 ### Ideas to Go Further
+- **Google Gemini AI Fitness Coach:** `POST /api/chat` brings real-time, context-aware nutrition, workout routines, and calorie deficit advice powered by Google Gemini 1.5 Flash (with intelligent offline coaching fallback).
 - **System Overview Dashboard:** `GET /api/dashboard/overview` aggregates system-wide totals (total users, total workouts logged, total meals, total goals, cumulative calories burnt/consumed) and recent activity logs.
 - **Search & Filter Endpoints:**
   - `GET /api/workouts/filter?userId={id}&type={type}&startDate={date}&endDate={date}`
   - `GET /api/meals/filter?userId={id}&mealType={type}&startDate={date}&endDate={date}`
-- **Interactive Browser UI:** Single-page dashboard at `http://localhost:8080/` for live demonstration during evaluation.
+- **Interactive Browser UI:** Single-page dashboard at `http://localhost:8080/` with interactive modal editing and live AI chat for examiner demonstration.
+
+### Note on OpenAPI vs OpenAI
+- **OpenAPI (Swagger):** An open, vendor-neutral specification standard for describing and documenting RESTful APIs. It provides the interactive documentation at `http://localhost:8080/swagger-ui.html`.
+- **OpenAI:** An independent commercial AI research company (creators of ChatGPT).
+- *FitLog uses OpenAPI for API documentation and Google Gemini 1.5 Flash for its AI Fitness Coach chatbot.*
 
 ---
 
@@ -188,10 +194,11 @@ As instructed in the assessment specifications, these rules are **strictly enfor
 | **Users** | `POST` | `/api/users` | Register a new user |
 | | `GET` | `/api/users` | List all users |
 | | `GET` | `/api/users/{id}` | Get user by ID |
-| | `PUT` | `/api/users/{id}` | Update user details |
+| | `PUT` | `/api/users/{id}` | Update user details (weight, height, age) |
 | | `DELETE` | `/api/users/{id}` | Delete user |
 | **Workouts** | `POST` | `/api/workouts` | **Core 1:** Log workout |
 | | `GET` | `/api/workouts/user/{userId}` | Get all workouts for a user |
+| | `PUT` | `/api/workouts/{id}` | Update workout details (duration, calories) |
 | | `GET` | `/api/workouts/filter` | **Idea:** Filter workouts by type/date |
 | | `DELETE` | `/api/workouts/{id}` | Delete workout |
 | **Meals** | `POST` | `/api/meals` | **Core 2:** Log meal |
@@ -202,6 +209,7 @@ As instructed in the assessment specifications, these rules are **strictly enfor
 | | `GET` | `/api/summaries/weekly-trend?userId={id}&weekStartDate={YYYY-MM-DD}` | **Core 4:** Weekly trend |
 | **Goals** | `POST` | `/api/goals` | **Core 5:** Set weekly goal |
 | | `GET` | `/api/goals/user/{userId}/active` | Get active goal progress |
+| **AI Coach** | `POST` | `/api/chat` | **AI:** Personalized workout & diet advice via Gemini |
 | **Dashboard**| `GET` | `/api/dashboard/overview` | **Idea:** System overview metrics |
 
 ---

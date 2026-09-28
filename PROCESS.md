@@ -58,8 +58,16 @@ Why was each tool chosen? Here is the exact technical rationale:
 - **Why we use it:** Validates client HTTP requests *before* the request even reaches the service or database layer.
 
 ### G. SpringDoc OpenAPI 3 (Swagger UI)
-- **What it is:** Generates interactive API documentation at `http://localhost:8080/swagger-ui.html`.
-- **Why we use it:** Allows examiners and developers to test every single REST endpoint right from a web browser without needing third-party tools.
+- **What it is:** The vendor-neutral industry standard specification for describing RESTful APIs (formerly known as Swagger). In FitLog, it automatically inspects Java controllers and renders an interactive web UI at `http://localhost:8080/swagger-ui.html`.
+- **Why we use it:** Allows examiners and developers to test every single REST endpoint (User, Workout, Meal, Goal, Summary, AI Chat) right from a web browser without needing third-party tools like Postman or Curl.
+- **Critical Clarification — OpenAPI is NOT OpenAI:**
+  - **OpenAPI:** An open API description standard managed by the Linux Foundation. It acts as an architectural "blueprint" or "contract" for REST web services.
+  - **OpenAI:** A private artificial intelligence research and deployment company that created ChatGPT and GPT models.
+  - *They are two completely different things that sound similar.* OpenAPI is about API documentation, while OpenAI is about generative artificial intelligence.
+
+### H. Google Gemini 1.5 Flash AI Fitness Coach
+- **What it is:** A generative AI integration using Google's Gemini 1.5 Flash Large Language Model (LLM) via Spring Boot's modern `RestClient`.
+- **Why we use it:** To provide real-time, personalized fitness, nutrition, and workout advice directly within FitLog (Tab 7: `🤖 7. AI Coach`). It includes an intelligent built-in fallback rules engine so the chatbot responds even when no external internet connection or API key is configured.
 
 ---
 
@@ -76,6 +84,8 @@ Why was each tool chosen? Here is the exact technical rationale:
 | **`@RestControllerAdvice`** | A global error interceptor for all controllers. | Converts Java exceptions into neat, clean JSON responses instead of scary 500 stack traces. |
 | **Foreign Key (`@ManyToOne`)** | A database column that points to the primary key of another table. | Connects workouts, meals, and goals to a specific `user_id`. |
 | **Cascade (`CascadeType.ALL`)** | An ORM instruction: if a User is deleted, automatically delete all their workouts, meals, and goals. | Prevents orphaned data in the database. |
+| **OpenAPI vs OpenAI** | OpenAPI is an API specification standard for REST docs; OpenAI is a company making AI models. | Prevents confusion during viva when faculty ask about Swagger/OpenAPI vs chatbots. |
+| **RestClient** | Spring Boot 3's modern, synchronous HTTP client for calling external web services. | Used in `GeminiChatServiceImpl` to communicate with Google's Gemini AI endpoint. |
 
 ---
 
@@ -91,6 +101,7 @@ Why was each tool chosen? Here is the exact technical rationale:
 |  PHASE 6: Interactive Web UI & OpenAPI Swagger Documentation     [COMPLETED]  |
 |  PHASE 7: Automated Unit Testing & Edge Case Verification        [COMPLETED]  |
 |  PHASE 8: Git Version Control, IntelliJ Integration & Delivery   [COMPLETED]  |
+|  PHASE 9: AI Fitness Coach (Google Gemini & Fallback Engine)     [COMPLETED]  |
 +-------------------------------------------------------------------------------+
 ```
 
@@ -208,6 +219,16 @@ Why was each tool chosen? Here is the exact technical rationale:
 
 ---
 
+### Phase 9: AI Fitness & Nutrition Coach Integration (Google Gemini 1.5 Flash)
+- **What was done:**
+  - Designed `ChatRequest` and `ChatResponse` DTOs.
+  - Implemented `ChatService` and `GeminiChatServiceImpl` utilizing Spring Boot 3's `RestClient` to connect to `generativelanguage.googleapis.com` (Gemini 1.5 Flash).
+  - Built a fallback fitness expert engine so even without an external API key or internet access, users receive expert coaching on nutrition, workouts, recovery, and calorie deficits.
+  - Exposed REST endpoint `POST /api/chat` documented in OpenAPI / Swagger.
+  - Added modern interactive tab `🤖 7. AI Coach` in `index.html` with instant prompt chips, message bubbles, markdown-like list formatting, and a browser-persistent API Key configuration modal.
+
+---
+
 ## 6. How to Run & Demonstrate to the Examiner
 
 1. **Start the Application in IntelliJ:**
@@ -220,3 +241,9 @@ Why was each tool chosen? Here is the exact technical rationale:
    - **Show Rule 1 Rejection:** In "Log Workout", enter `-200` in calories. Watch the red alert appear: `"Calories burnt must be a non-negative number."`
    - **Show Rule 2 Rejection:** In "Weekly Trend", select a week in the past with no entries. Watch the alert appear: `"A weekly summary is only generated once at least one entry exists for that week."`
    - **Show Normal Flow:** Log a valid workout and meal. Show the daily summary automatically computing the net calories and balance status (`SURPLUS`/`DEFICIT`).
+5. **Demonstrate the AI Fitness Coach:**
+   - Click tab **7. AI Coach** in the dashboard.
+   - Click one of the quick chips (e.g. *"Give me a high protein vegetarian meal plan"*).
+   - Show how the backend interacts with Google Gemini 1.5 Flash (or the offline coach) and streams intelligent, formatted advice back in real-time.
+   - Explain the difference between **OpenAPI** (the Swagger documentation contract) and **AI Chat** (Generative AI).
+

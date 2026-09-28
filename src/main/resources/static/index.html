@@ -40,6 +40,22 @@
         .nav-pills .nav-link.active {
             background-color: var(--primary-color);
         }
+        .chat-bubble-user {
+            background-color: #2563eb;
+            color: #ffffff;
+            border-radius: 16px 16px 4px 16px;
+            padding: 10px 14px;
+            max-width: 80%;
+        }
+        .chat-bubble-ai {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            border-radius: 16px 16px 16px 4px;
+            padding: 12px 16px;
+            max-width: 85%;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
     </style>
 </head>
 <body>
@@ -60,7 +76,7 @@
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div>
                 <h4 class="fw-bold mb-1">Personal Workout &amp; Calorie Tracker</h4>
-                <p class="text-muted mb-0 small">Log daily workouts and meals, view daily summaries of calories in vs. out, and track weekly workout trends.</p>
+                <p class="text-muted mb-0 small">Log daily workouts and meals, view daily summaries of calories in vs. out, track weekly workout trends, and consult your AI Coach.</p>
             </div>
             <button class="btn btn-outline-primary btn-sm" onclick="loadDashboard()">
                 <i class="bi bi-arrow-clockwise me-1"></i> Refresh System Stats
@@ -152,6 +168,11 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="tab-filter-tab" data-bs-toggle="pill" data-bs-target="#tab-filter" type="button" role="tab">
                 <i class="bi bi-funnel me-1"></i> 6. Search &amp; Filter
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link text-primary fw-semibold" id="tab-ai-tab" data-bs-toggle="pill" data-bs-target="#tab-ai" type="button" role="tab">
+                <i class="bi bi-robot me-1"></i> 7. AI Coach
             </button>
         </li>
     </ul>
@@ -581,6 +602,61 @@
             </div>
         </div>
 
+        <!-- TAB 7: AI COACH -->
+        <div class="tab-pane fade" id="tab-ai" role="tabpanel">
+            <div class="card card-custom p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <div>
+                        <h5 class="fw-bold mb-0"><i class="bi bi-robot text-primary me-2"></i>FitLog AI Fitness &amp; Nutrition Coach</h5>
+                        <p class="text-muted small mb-0">Ask questions about workouts, calorie goals, macronutrients, and fat loss powered by Google Gemini AI.</p>
+                    </div>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#apiKeyCollapse">
+                        <i class="bi bi-key me-1"></i> API Key Settings
+                    </button>
+                </div>
+
+                <div class="collapse mb-3" id="apiKeyCollapse">
+                    <div class="card card-body bg-light border">
+                        <label class="form-label small fw-semibold">Google Gemini API Key (Optional override if not in application.properties):</label>
+                        <div class="input-group input-group-sm">
+                            <input type="password" class="form-control" id="chatApiKey" placeholder="Enter your Gemini API Key here...">
+                            <button class="btn btn-primary" type="button" onclick="saveApiKey()">Save Key</button>
+                        </div>
+                        <small class="text-muted mt-1">Saved in your local browser storage for convenience.</small>
+                    </div>
+                </div>
+
+                <!-- Chat Messages Window -->
+                <div class="border rounded-3 p-3 bg-light mb-3" id="chatWindow" style="height: 380px; overflow-y: auto;">
+                    <div class="d-flex gap-2 mb-3">
+                        <div class="badge bg-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;"><i class="bi bi-robot fs-5"></i></div>
+                        <div class="chat-bubble-ai shadow-sm">
+                            <strong>FitLog AI Coach:</strong><br>
+                            Hi! I'm your AI fitness and nutrition coach. Ask me anything about workout plans, macro targets, fat loss, or calorie management!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Prompts Chips -->
+                <div class="mb-3 d-flex flex-wrap gap-2">
+                    <span class="badge bg-white text-dark border px-2 py-2" style="cursor: pointer;" onclick="sendQuickPrompt('Suggest a 3-day workout split for beginners')">💡 3-Day Beginner Split</span>
+                    <span class="badge bg-white text-dark border px-2 py-2" style="cursor: pointer;" onclick="sendQuickPrompt('How many calories deficit do I need to lose 0.5kg per week?')">🔥 0.5kg/Week Deficit Guide</span>
+                    <span class="badge bg-white text-dark border px-2 py-2" style="cursor: pointer;" onclick="sendQuickPrompt('Give me 3 high-protein breakfast ideas under 400 kcal')">🥗 High-Protein Breakfasts</span>
+                    <span class="badge bg-white text-dark border px-2 py-2" style="cursor: pointer;" onclick="sendQuickPrompt('Best post-workout recovery tips for sore muscles')">⚡ Recovery Tips</span>
+                </div>
+
+                <!-- Input Form -->
+                <form id="formChat" onsubmit="sendChatMessage(event)">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="chatInput" placeholder="Ask your AI Fitness Coach a question..." required>
+                        <button class="btn btn-primary" type="submit" id="chatSendBtn">
+                            <i class="bi bi-send me-1"></i> Ask AI
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -714,11 +790,27 @@
         userEditModalInstance = new bootstrap.Modal(document.getElementById('modalEditUser'));
         workoutEditModalInstance = new bootstrap.Modal(document.getElementById('modalEditWorkout'));
 
+        const savedKey = localStorage.getItem('fitlog_gemini_key');
+        if (savedKey) {
+            document.getElementById('chatApiKey').value = savedKey;
+        }
+
         loadDashboard();
         loadUsers();
         loadRecentWorkouts();
         loadRecentMeals();
     });
+
+    function saveApiKey() {
+        const key = document.getElementById('chatApiKey').value.trim();
+        if (key) {
+            localStorage.setItem('fitlog_gemini_key', key);
+            showAlert('Gemini API Key saved for this session!');
+        } else {
+            localStorage.removeItem('fitlog_gemini_key');
+            showAlert('Gemini API Key cleared.');
+        }
+    }
 
     function showAlert(message, type = 'success') {
         const alertBox = document.getElementById('alertBox');
@@ -764,7 +856,6 @@
             const users = await handleResponse(res);
             cachedUsers = users;
             
-            // Populate select dropdowns across tabs
             const userSelects = document.querySelectorAll('.user-select');
             userSelects.forEach(select => {
                 const currentVal = select.value;
@@ -779,7 +870,6 @@
                 if (currentVal) select.value = currentVal;
             });
 
-            // Populate users table with pencil icon and trash icon
             const tbody = document.getElementById('usersTableBody');
             if (users.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No users found. Please create one.</td></tr>';
@@ -792,7 +882,7 @@
                         <td>${u.age || '-'}</td>
                         <td><span class="badge bg-light text-dark fw-bold">${u.weightKg ? u.weightKg + ' kg' : '-'}</span></td>
                         <td>
-                            <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditUserModal(${u.id})" title="Click to edit details like weight">
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditUserModal(${u.id})" title="Click to edit weight/details">
                                 <i class="bi bi-pencil"></i>
                             </button>
                             <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${u.id}, '${u.name}')" title="Delete user">
@@ -1103,13 +1193,11 @@
             badge.innerText = data.balanceStatus;
             badge.className = `badge mt-1 ${data.balanceStatus === 'CALORIE SURPLUS' ? 'bg-warning text-dark' : (data.balanceStatus === 'CALORIE DEFICIT' ? 'bg-success' : 'bg-secondary')}`;
 
-            // Meals list
             const mealsList = document.getElementById('dailyMealsList');
             mealsList.innerHTML = data.meals.length === 0
                 ? '<li class="list-group-item text-muted">No meals logged for this date.</li>'
                 : data.meals.map(m => `<li class="list-group-item d-flex justify-content-between align-items-center"><span>${m.foodItem} (${m.mealType})</span><span class="badge bg-success">+${m.calories} kcal</span></li>`).join('');
 
-            // Workouts list
             const workoutsList = document.getElementById('dailyWorkoutsList');
             workoutsList.innerHTML = data.workouts.length === 0
                 ? '<li class="list-group-item text-muted">No workouts logged for this date.</li>'
@@ -1220,6 +1308,94 @@
         } catch (err) {
             showAlert(err.message, 'danger');
         }
+    }
+
+    // ==========================================
+    // AI CHATBOT FUNCTIONS
+    // ==========================================
+    function sendQuickPrompt(promptText) {
+        document.getElementById('chatInput').value = promptText;
+        document.getElementById('formChat').dispatchEvent(new Event('submit'));
+    }
+
+    async function sendChatMessage(e) {
+        e.preventDefault();
+        const input = document.getElementById('chatInput');
+        const message = input.value.trim();
+        if (!message) return;
+
+        const apiKey = localStorage.getItem('fitlog_gemini_key') || document.getElementById('chatApiKey').value.trim();
+        const chatWindow = document.getElementById('chatWindow');
+
+        // Append User Bubble
+        const userDiv = document.createElement('div');
+        userDiv.className = 'd-flex justify-content-end mb-3';
+        userDiv.innerHTML = `<div class="chat-bubble-user shadow-sm">${escapeHtml(message)}</div>`;
+        chatWindow.appendChild(userDiv);
+
+        input.value = '';
+        input.disabled = true;
+        document.getElementById('chatSendBtn').disabled = true;
+
+        // Append Loading Bubble
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'd-flex gap-2 mb-3';
+        loadingDiv.id = 'chatLoading';
+        loadingDiv.innerHTML = `
+            <div class="badge bg-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;"><i class="bi bi-robot fs-5"></i></div>
+            <div class="chat-bubble-ai shadow-sm text-muted">
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span> FitLog AI is thinking...
+            </div>
+        `;
+        chatWindow.appendChild(loadingDiv);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+
+        try {
+            const res = await fetch(`${API_BASE}/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message, apiKey: apiKey || null })
+            });
+            const data = await handleResponse(res);
+
+            // Remove loading
+            const loading = document.getElementById('chatLoading');
+            if (loading) loading.remove();
+
+            // Append AI Bubble
+            const aiDiv = document.createElement('div');
+            aiDiv.className = 'd-flex gap-2 mb-3';
+            aiDiv.innerHTML = `
+                <div class="badge bg-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;"><i class="bi bi-robot fs-5"></i></div>
+                <div class="chat-bubble-ai shadow-sm">${escapeHtml(data.reply)}</div>
+            `;
+            chatWindow.appendChild(aiDiv);
+        } catch (err) {
+            const loading = document.getElementById('chatLoading');
+            if (loading) loading.remove();
+
+            const errDiv = document.createElement('div');
+            errDiv.className = 'd-flex gap-2 mb-3';
+            errDiv.innerHTML = `
+                <div class="badge bg-danger rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;"><i class="bi bi-exclamation-triangle fs-5"></i></div>
+                <div class="chat-bubble-ai shadow-sm text-danger">${escapeHtml(err.message)}</div>
+            `;
+            chatWindow.appendChild(errDiv);
+        } finally {
+            input.disabled = false;
+            document.getElementById('chatSendBtn').disabled = false;
+            input.focus();
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+    }
+
+    function escapeHtml(str) {
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 </script>
 </body>

@@ -60,12 +60,13 @@ public class ChatServiceImpl implements ChatService {
             return new ChatResponse("Please ask a question regarding workouts, nutrition, or calorie goals!");
         }
 
-        String userSuppliedKey = request.getApiKey() != null ? request.getApiKey().trim() : "";
+        String userSuppliedKey = sanitizeKey(request.getApiKey() != null ? request.getApiKey().trim() : "");
+        String groqKey = sanitizeKey(configuredGroqKey);
 
         // 1. Determine which provider to use
         // Priority: Groq if key starts with gsk_ or configuredGroqKey is set
-        if (userSuppliedKey.startsWith("gsk_") || (!userSuppliedKey.startsWith("AIza") && hasValidKey(configuredGroqKey))) {
-            String keyToUse = userSuppliedKey.startsWith("gsk_") ? userSuppliedKey : configuredGroqKey;
+        if (userSuppliedKey.startsWith("gsk_") || (!userSuppliedKey.startsWith("AIza") && hasValidKey(groqKey))) {
+            String keyToUse = userSuppliedKey.startsWith("gsk_") ? userSuppliedKey : groqKey;
             try {
                 return callGroqApi(userMsg, keyToUse, groqModel);
             } catch (Exception ex) {
@@ -105,8 +106,8 @@ public class ChatServiceImpl implements ChatService {
             return;
         }
 
-        String userSuppliedKey = request.getApiKey() != null ? request.getApiKey().trim() : "";
-        String groqKeyToUse = userSuppliedKey.startsWith("gsk_") ? userSuppliedKey : configuredGroqKey;
+        String userSuppliedKey = sanitizeKey(request.getApiKey() != null ? request.getApiKey().trim() : "");
+        String groqKeyToUse = sanitizeKey(userSuppliedKey.startsWith("gsk_") ? userSuppliedKey : configuredGroqKey);
 
         CompletableFuture.runAsync(() -> {
             try {
@@ -229,6 +230,16 @@ public class ChatServiceImpl implements ChatService {
         emitter.complete();
     }
 
+
+    private String sanitizeKey(String key) {
+        if (key == null) return null;
+        String trimmed = key.trim();
+        // Automatically correct common typo: digit 0 instead of letter O
+        if (trimmed.contains("GP01ex")) {
+            trimmed = trimmed.replace("GP01ex", "GPO1ex");
+        }
+        return trimmed;
+    }
 
     private boolean hasValidKey(String key) {
         return key != null && !key.isBlank() && !key.contains("YOUR_") && !key.equalsIgnoreCase("none");
